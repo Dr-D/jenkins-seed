@@ -1,0 +1,31 @@
+import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval
+
+pipeline {
+    agent {
+        label 'built-in'
+    }
+
+    stages {
+        stage('seed') {
+            steps {
+                dir('/opt/code/') {
+                    jobDsl(targets: 'projects/dev/jobs/*.groovy')
+                }
+            }
+        }
+
+        //https://stackoverflow.com/questions/43699190/seed-job-asks-for-script-approval-in-jenkins
+        //method org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval getPendingScripts
+        // staticMethod org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval get
+        stage('approve') {
+            steps {
+                script {
+                    ScriptApproval scriptApproval = ScriptApproval.get()
+                    scriptApproval.pendingScripts.each {
+                        scriptApproval.approveScript(it.hash)
+                    }
+                }
+            }
+        }
+    }//end stages
+}
